@@ -1,5 +1,5 @@
 #!/bin/bash
-# SAP RFC test - Unix launcher
+# SAP RFC test - Unix launcher (pyrfc + NW RFC SDK)
 # Usage: source .env && bash run.sh [table] [max_rows]
 
 set -e
@@ -14,7 +14,7 @@ fi
 [ -n "$1" ] && export SAP_TABLE="$1"
 [ -n "$2" ] && export SAP_MAXROWS="$2"
 
-echo "-> SAP: $SAP_HOST:$SAP_PORT client=$SAP_CLIENT"
+echo "-> SAP: $SAP_HOST sysnr=$SAP_SYSNR client=$SAP_CLIENT"
 echo "-> Table: ${SAP_TABLE:-T001}"
 echo ""
 python3 rfc_test.py

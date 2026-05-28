@@ -1,23 +1,29 @@
 #!/usr/bin/env python3
 """
-SAP ECC 连接测试 — 纯 HTTP/SOAP 方式调用 RFC_READ_TABLE
-无需 SAP NW RFC SDK，只需 pip install requests
+SAP ECC 连接测试 — pyrfc + SAP NW RFC SDK
+调用 RFC_READ_TABLE 读取表数据
 """
 
 import os
 import sys
-import requests
-import xml.etree.ElementTree as ET
 from datetime import datetime
-from requests.auth import HTTPBasicAuth
+
+try:
+    from pyrfc import Connection, ABAPApplicationError, CommunicationError
+except ImportError:
+    print("❌ pyrfc 未安装")
+    print("   前置条件: 1) 下载 SAP NW RFC SDK 7.50 (me.sap.com)")
+    print("             2) pip install pyrfc")
+    sys.exit(1)
 
 
+# ── 连接参数 ────────────────────────────────────────
 CONFIG = {
-    "host":   os.environ.get("SAP_HOST",   ""),
-    "port":   os.environ.get("SAP_PORT",   "8000"),
+    "ashost": os.environ.get("SAP_HOST",   ""),
+    "sysnr":  os.environ.get("SAP_SYSNR",  "00"),
+    "client": os.environ.get("SAP_CLIENT", "800"),
     "user":   os.environ.get("SAP_USER",   ""),
     "passwd": os.environ.get("SAP_PASS",   ""),
-    "client": os.environ.get("SAP_CLIENT", "800"),
     "lang":   os.environ.get("SAP_LANG",   "ZH"),
 }
 
@@ -25,100 +31,88 @@ READ_TABLE  = os.environ.get("SAP_TABLE",   "T001")
 READ_FIELDS = ["BUKRS", "BUTXT", "ORT01", "LAND1"]
 MAX_ROWS    = int(os.environ.get("SAP_MAXROWS", "20"))
 
-SOAP_ENVELOPE = """<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <rfc:RFC_READ_TABLE xmlns:rfc="urn:sap-com:document:sap:rfc:functions">
-      <DELIMITER>{delimiter}</DELIMITER>
-      {fields_xml}
-      {options_xml}
-      <QUERY_TABLE>{table}</QUERY_TABLE>
-      <ROWCOUNT>{rowcount}</ROWCOUNT>
-      <ROWSKIPS>0</ROWSKIPS>
-      <NO_DATA/>
-    </rfc:RFC_READ_TABLE>
-  </soap:Body>
-</soap:Envelope>"""
 
-
-def build_soap(table, fields, max_rows, where="", delimiter="|"):
-    fields_xml = ""
-    for f in fields:
-        fields_xml += f"<FIELDS><item><FIELDNAME>{f}</FIELDNAME></item></FIELDS>\n"
-    options_xml = f"<OPTIONS><item><TEXT>{where}</TEXT></item></OPTIONS>" if where else ""
-    return SOAP_ENVELOPE.format(
-        delimiter=delimiter, fields_xml=fields_xml,
-        options_xml=options_xml, table=table, rowcount=max_rows)
-
-
-def call_rfc(host, port, client, user, passwd, soap_body):
-    url = f"http://{host}:{port}/sap/bc/soap/rfc?sap-client={client}"
-    print(f"→ 连接 {host}:{port} client={client} user={user} ...")
+def connect_sap(config: dict) -> Connection:
+    print(f"→ 连接 {config['ashost']}:{config['sysnr']} "
+          f"client={config['client']} user={config['user']} ...")
     try:
-        return requests.post(url, data=soap_body.encode("utf-8"),
-            headers={"Content-Type": "text/xml; charset=utf-8"},
-            auth=HTTPBasicAuth(user, passwd), timeout=30)
-    except requests.exceptions.ConnectionError:
-        print(f"❌ 无法连接 {host}:{port}")
-        sys.exit(1)
-    except requests.exceptions.Timeout:
-        print("❌ 连接超时")
+        conn = Connection(**config)
+        print("✅ SAP 连接成功\n")
+        return conn
+    except CommunicationError as e:
+        print(f"❌ 连接失败: {e}")
         sys.exit(1)
 
 
-def parse_response(resp):
-    print(f"HTTP {resp.status_code}")
-    if resp.status_code == 401:
-        print("❌ 认证失败"); sys.exit(1)
-    elif resp.status_code == 404:
-        print("❌ SOAP 未找到，SICF 检查 /sap/bc/soap/rfc"); sys.exit(1)
-    elif resp.status_code != 200:
-        print(f"❌ 失败:\n{resp.text[:500]}"); sys.exit(1)
+def read_table(conn: Connection, table: str, fields: list,
+               max_rows: int = 20, where: str = ""):
+    print(f"→ 读取表 {table}, 最多 {max_rows} 行 ...")
 
-    root = ET.fromstring(resp.text)
-    nsmap = {"soap": "http://schemas.xmlsoap.org/soap/envelope/"}
-    fault = root.find(".//soap:Fault", nsmap)
-    if fault is not None:
-        print(f"❌ SAP 错误:\n{ET.tostring(fault, encoding='unicode')[:500]}")
-        sys.exit(1)
+    try:
+        options = [{"TEXT": where}] if where else []
 
-    columns = []
-    for item in root.findall(".//FIELDS/item"):
-        fn = item.findtext("FIELDNAME", "")
-        if fn: columns.append(fn)
+        result = conn.call("RFC_READ_TABLE",
+            QUERY_TABLE = table,
+            DELIMITER   = "|",
+            FIELDS      = [{"FIELDNAME": f} for f in fields],
+            OPTIONS     = options,
+            ROWCOUNT    = max_rows,
+            ROWSKIPS    = 0,
+        )
 
-    rows = []
-    for item in root.findall(".//DATA/item"):
-        wa = item.findtext("WA", "").rstrip("|")
-        if wa: rows.append(wa.split("|"))
+        columns = [f["FIELDNAME"] for f in result["FIELDS"]]
+        rows = []
+        for line in result["DATA"]:
+            wa = line["WA"].rstrip("|")
+            if wa:
+                rows.append(wa.split("|"))
 
-    print(f"✅ 返回 {len(rows)} 行, {len(columns)} 列\n")
-    return columns, rows
+        print(f"✅ 返回 {len(rows)} 行, {len(columns)} 列\n")
+        return columns, rows
+
+    except ABAPApplicationError as e:
+        print(f"❌ RFC 错误: {e}")
+        return [], []
 
 
-def display_table(columns, rows):
-    if not rows: print("(无数据)"); return
-    widths = []
-    for i, c in enumerate(columns):
-        dm = max((len(r[i]) for r in rows if i < len(r)), default=0)
-        widths.append(max(len(c), dm, 8))
-    header = "  ".join(c.ljust(widths[i]) for i, c in enumerate(columns))
-    print(header); print("-" * len(header))
+def display_table(columns: list, rows: list):
+    if not rows:
+        print("(无数据)")
+        return
+
+    col_widths = []
+    for i, col in enumerate(columns):
+        data_max = max((len(r[i]) for r in rows if i < len(r)), default=0)
+        col_widths.append(max(len(col), data_max, 8))
+
+    header = "  ".join(c.ljust(col_widths[i]) for i, c in enumerate(columns))
+    print(header)
+    print("-" * len(header))
+
     for row in rows:
-        print("  ".join(v.ljust(widths[i]) for i, v in enumerate(row)))
+        print("  ".join(v.ljust(col_widths[i]) for i, v in enumerate(row)))
 
 
 def main():
     missing = [k for k, v in CONFIG.items() if not v]
     if missing:
-        print("❌ 缺少参数: set SAP_HOST=... SAP_USER=... etc"); sys.exit(1)
+        print("❌ 缺少 SAP 连接参数:\n")
+        print("  set SAP_USER=xxx & set SAP_PASS=xxx")
+        print("  set SAP_HOST=10.x.x.x & set SAP_CLIENT=800")
+        sys.exit(1)
+
     start = datetime.now()
-    soap = build_soap(READ_TABLE, READ_FIELDS, MAX_ROWS)
-    resp = call_rfc(CONFIG["host"], CONFIG["port"], CONFIG["client"],
-                    CONFIG["user"], CONFIG["passwd"], soap)
-    cols, rows = parse_response(resp)
-    if cols: display_table(cols, rows)
-    print(f"\n⏱ 耗时 {(datetime.now()-start).total_seconds():.2f}s")
+
+    conn = connect_sap(CONFIG)
+    cols, rows = read_table(conn, READ_TABLE, READ_FIELDS, MAX_ROWS)
+
+    if cols:
+        display_table(cols, rows)
+
+    conn.close()
+
+    elapsed = (datetime.now() - start).total_seconds()
+    print(f"\n⏱ 耗时 {elapsed:.2f}s")
 
 
 if __name__ == "__main__":

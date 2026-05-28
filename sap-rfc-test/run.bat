@@ -1,5 +1,5 @@
 @echo off
-REM SAP RFC test - Windows launcher
+REM SAP RFC test - Windows launcher (pyrfc + NW RFC SDK)
 REM Usage: run.bat [table] [max_rows]
 
 setlocal
@@ -15,10 +15,8 @@ if "%SAP_HOST%"=="" (
 if not "%1"=="" set SAP_TABLE=%1
 if not "%2"=="" set SAP_MAXROWS=%2
 
-echo -> SAP: %SAP_HOST%:%SAP_PORT% client=%SAP_CLIENT%
+echo -> SAP: %SAP_HOST% sysnr=%SAP_SYSNR% client=%SAP_CLIENT%
 echo -> Table: %SAP_TABLE%
 echo.
-
-python -c "import requests" 2>nul || pip install requests -q
 
 python rfc_test.py
