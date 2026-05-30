@@ -1,79 +1,48 @@
-# SAP ECC RFC 测试 — Python 读表
+# SAP ECC 表读取工具
 
-pyrfc + SAP NW RFC SDK 方案，支持 Windows / Mac / Linux。
+传入表名，输出表内容。支持三种连接模式，自动降级。
 
-## 架构
+## 模式
+
+| 模式 | 依赖 | 说明 |
+|------|------|------|
+| pyrfc | SAP NW RFC SDK + pip install pyrfc | RFC 直连，最快 |
+| requests | pip install requests | HTTP/SOAP |
+| **urllib** | **无（Python 自带）** | **HTTP/SOAP，零依赖，开箱即用** |
+
+## 前提条件
+
+SAP ECC HTTP 端口已开启。SAP GUI 执行 **SMICM → Goto → Services** 确认：
 
 ```
-rfc_test.py                   ← Python 脚本
-    │
-    ▼
-pyrfc (Python 包)             ← RFC 的 Python 封装
-    │
-    ▼
-SAP NW RFC SDK 7.50           ← SAP 专有 C 库 (需从 me.sap.com 下载)
-    │
-    ▼
-SAP ECC                       ← 调用 RFC_READ_TABLE
+HTTP    8000   Active
 ```
 
-## 安装
-
-### 1. 下载 SAP NW RFC SDK 7.50
-
-从 SAP Software Center 下载: https://me.sap.com/softwarecenter
-搜索 **SAP NW RFC SDK 7.50**
-
-### 2. 安装 SDK
-
-**Windows**: 解压到 `C:\nwrfcsdk`，将 `lib` 目录加入 PATH
-
-**Mac**:
-```bash
-sudo mkdir -p /usr/local/sap/nwrfcsdk
-sudo unzip nwrfcsdk_*.zip -d /usr/local/sap/nwrfcsdk
-```
-
-**Linux**:
-```bash
-sudo mkdir -p /usr/local/sap/nwrfcsdk
-sudo unzip nwrfcsdk_*.zip -d /usr/local/sap/nwrfcsdk
-sudo ldconfig /usr/local/sap/nwrfcsdk/lib
-```
-
-### 3. 安装 pyrfc
-
-```bash
-pip install pyrfc
-```
-
-Python 3.12+ 需从源码编译:
-```bash
-export SAPNWRFC_HOME=/usr/local/sap/nwrfcsdk
-pip install pyrfc --no-binary :all:
-```
-
-## 部署
-
-### Windows（公司内网）
+## 部署 (Windows)
 
 ```batch
+:: 1. 安装 Python 3.x (勾选 Add to PATH)
+:: 2. 拷贝项目 / git clone
+
 git clone https://github.com/jaxi-cn/sap.git
 cd sap\sap-rfc-test
+
+:: 3. 配置
 copy .env.example.bat .env.bat
-notepad .env.bat          REM 填写 SAP_HOST
+notepad .env.bat        REM 改 SAP_HOST 为 SAP 服务器 IP
+
+:: 4. 运行（零依赖，直接用）
 .env.bat
-run.bat
+python sap_reader.py T001
 ```
 
-### Mac / Linux
+## 用法
 
-```bash
-git clone https://github.com/jaxi-cn/sap.git
-cd sap/sap-rfc-test
-cp .env.example .env
-# 编辑 .env 填写 SAP_HOST
-source .env && bash run.sh
+```batch
+python sap_reader.py T001                        读公司代码表
+python sap_reader.py KNA1 -n 100                 读客户主数据 100 行
+python sap_reader.py MARA -f MATNR MTART         只读指定字段
+python sap_reader.py VBAK -w "ERDAT='20260530'"  带 WHERE 条件
 ```
 
 ## 配置
@@ -83,31 +52,6 @@ source .env && bash run.sh
 | SAP_HOST | SAP 服务器 IP | 10.10.10.100 |
 | SAP_SYSNR | 系统编号 | 00 |
 | SAP_CLIENT | 集团号 | 800 |
+| SAP_PORT | HTTP 端口 | 8000 |
 | SAP_USER | SAP 用户名 | s0027497711 |
 | SAP_PASS | 密码 | S0027497711! |
-
-## 运行
-
-```batch
-REM 读公司代码表 (T001)
-run.bat
-
-REM 读客户主数据 50 行
-run.bat KNA1 50
-```
-
-```bash
-bash run.sh           # 默认 T001
-bash run.sh KNA1 50   # 客户主数据 50 行
-```
-
-## 常用测试表
-
-| 表名 | 说明 |
-|------|------|
-| T001 | 公司代码 |
-| KNA1 | 客户主数据 |
-| LFA1 | 供应商主数据 |
-| MARA | 物料主数据 |
-| VBAK | 销售订单头 |
-| BKPF | 会计凭证头 |

@@ -1,22 +1,13 @@
 @echo off
-REM SAP RFC test - Windows launcher (pyrfc + NW RFC SDK)
-REM Usage: run.bat [table] [max_rows]
-
-setlocal
+REM SAP ECC 表读取 — 快速启动 (Windows)
+REM 用法: run.bat [表名] [-n 行数] [-f 字段...]
 
 if "%SAP_HOST%"=="" (
-    echo [X] Missing SAP connection parameters
-    echo    First: copy .env.example.bat .env.bat
-    echo           edit .env.bat and set SAP_HOST
-    echo    Then:  .env.bat
+    echo 请先配置连接参数:
+    echo   copy .env.example.bat .env.bat
+    echo   编辑 .env.bat 填入 SAP_HOST
+    echo   .env.bat
     exit /b 1
 )
 
-if not "%1"=="" set SAP_TABLE=%1
-if not "%2"=="" set SAP_MAXROWS=%2
-
-echo -> SAP: %SAP_HOST% sysnr=%SAP_SYSNR% client=%SAP_CLIENT%
-echo -> Table: %SAP_TABLE%
-echo.
-
-python rfc_test.py
+python sap_reader.py %*

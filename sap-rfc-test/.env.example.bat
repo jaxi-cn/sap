@@ -1,5 +1,5 @@
 @echo off
-REM 复制此文件为 .env.bat 并修改参数
+REM SAP 连接参数 — 复制此文件为 .env.bat 并修改
 
 set SAP_USER=s0027497711
 set SAP_PASS=S0027497711!
