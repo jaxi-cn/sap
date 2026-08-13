@@ -1,0 +1,155 @@
+<mvc:View
+  controllerName="zpp.processorder.v2excel.zpppov2excel.controller.Main"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  displayBlock="true">
+  <Page
+    id="mainPage"
+    title="{i18n>appTitle}"
+    busy="{view>/busy}"
+    busyIndicatorDelay="0">
+    <content>
+      <VBox class="sapUiSmallMargin">
+        <MessageStrip
+          text="{i18n>operationHint}"
+          type="Information"
+          showIcon="true"
+          class="sapUiTinyMarginBottom" />
+        <OverflowToolbar class="sapUiTinyMarginBottom">
+          <Button
+            text="{i18n>downloadTemplate}"
+            icon="sap-icon://download"
+            press=".onDownloadTemplate" />
+          <Button
+            text="{i18n>upload}"
+            icon="sap-icon://upload"
+            enabled="{view>/canUpload}"
+            press=".onUploadPress" />
+          <ToolbarSeparator />
+          <Button
+            text="{i18n>validate}"
+            icon="sap-icon://validate"
+            enabled="{view>/canValidate}"
+            press=".onValidate" />
+          <Button
+            text="{i18n>create}"
+            icon="sap-icon://create"
+            type="Emphasized"
+            enabled="{view>/canCreate}"
+            press=".onCreate" />
+          <ToolbarSpacer />
+          <ObjectStatus
+            text="{= ${view>/totalCount} + ' 行'}"
+            visible="{= ${view>/totalCount} > 0}" />
+        </OverflowToolbar>
+
+        <MessageStrip
+          text="{view>/progressText}"
+          type="Information"
+          showIcon="true"
+          visible="{= ${view>/progressText} !== ''}"
+          class="sapUiTinyMarginBottom" />
+        <MessageStrip
+          text="{view>/summaryText}"
+          type="Information"
+          showIcon="true"
+          visible="{= ${view>/summaryText} !== ''}"
+          class="sapUiTinyMarginBottom" />
+
+        <ScrollContainer width="100%" horizontal="true" vertical="false">
+          <Table
+            id="orderTable"
+            width="1720px"
+            fixedLayout="false"
+            growing="true"
+            growingThreshold="20"
+            noDataText="{i18n>noData}"
+            items="{view>/rows}">
+            <columns>
+              <Column width="8rem"><Text text="{i18n>productionPlant}" /></Column>
+              <Column width="13rem"><Text text="{i18n>material}" /></Column>
+              <Column width="8rem"><Text text="{i18n>orderType}" /></Column>
+              <Column width="10rem"><Text text="{i18n>startDate}" /></Column>
+              <Column width="10rem"><Text text="{i18n>endDate}" /></Column>
+              <Column width="10rem"><Text text="{i18n>quantity}" /></Column>
+              <Column width="8rem"><Text text="{i18n>productionVersion}" /></Column>
+              <Column width="11rem"><Text text="{i18n>processOrder}" /></Column>
+              <Column width="9rem"><Text text="{i18n>validationStatus}" /></Column>
+              <Column width="9rem"><Text text="{i18n>createStatus}" /></Column>
+              <Column width="9rem"><Text text="{i18n>releaseStatus}" /></Column>
+              <Column width="25rem"><Text text="{i18n>message}" /></Column>
+            </columns>
+            <items>
+              <ColumnListItem vAlign="Middle">
+                <cells>
+                  <Input
+                    value="{view>ProductionPlant}"
+                    maxLength="4"
+                    editable="{= !${view>/inputLocked} &amp;&amp; !${view>/busy} }"
+                    valueState="{view>FieldStates/ProductionPlant/state}"
+                    valueStateText="{view>FieldStates/ProductionPlant/text}"
+                    change=".onFieldChange" />
+                  <Input
+                    value="{view>Material}"
+                    maxLength="40"
+                    editable="{= !${view>/inputLocked} &amp;&amp; !${view>/busy} }"
+                    valueState="{view>FieldStates/Material/state}"
+                    valueStateText="{view>FieldStates/Material/text}"
+                    change=".onFieldChange" />
+                  <Input
+                    value="{view>ManufacturingOrderType}"
+                    maxLength="4"
+                    editable="{= !${view>/inputLocked} &amp;&amp; !${view>/busy} }"
+                    valueState="{view>FieldStates/ManufacturingOrderType/state}"
+                    valueStateText="{view>FieldStates/ManufacturingOrderType/text}"
+                    change=".onFieldChange" />
+                  <Input
+                    value="{view>MfgOrderPlannedStartDate}"
+                    maxLength="10"
+                    placeholder="YYYY-MM-DD"
+                    editable="{= !${view>/inputLocked} &amp;&amp; !${view>/busy} }"
+                    valueState="{view>FieldStates/MfgOrderPlannedStartDate/state}"
+                    valueStateText="{view>FieldStates/MfgOrderPlannedStartDate/text}"
+                    change=".onFieldChange" />
+                  <Input
+                    value="{view>MfgOrderPlannedEndDate}"
+                    maxLength="10"
+                    placeholder="YYYY-MM-DD"
+                    editable="{= !${view>/inputLocked} &amp;&amp; !${view>/busy} }"
+                    valueState="{view>FieldStates/MfgOrderPlannedEndDate/state}"
+                    valueStateText="{view>FieldStates/MfgOrderPlannedEndDate/text}"
+                    change=".onFieldChange" />
+                  <Input
+                    value="{view>TotalQuantity}"
+                    maxLength="16"
+                    editable="{= !${view>/inputLocked} &amp;&amp; !${view>/busy} }"
+                    valueState="{view>FieldStates/TotalQuantity/state}"
+                    valueStateText="{view>FieldStates/TotalQuantity/text}"
+                    change=".onFieldChange" />
+                  <Input
+                    value="{view>ProductionVersion}"
+                    maxLength="4"
+                    editable="{= !${view>/inputLocked} &amp;&amp; !${view>/busy} }"
+                    valueState="{view>FieldStates/ProductionVersion/state}"
+                    valueStateText="{view>FieldStates/ProductionVersion/text}"
+                    change=".onFieldChange" />
+                  <ObjectIdentifier title="{view>ProcessOrder}" />
+                  <ObjectStatus
+                    text="{path: 'view>ValidationStatus', formatter: '.formatValidationText'}"
+                    state="{path: 'view>ValidationStatus', formatter: '.formatStatusState'}" />
+                  <ObjectStatus
+                    text="{path: 'view>CreateStatus', formatter: '.formatStatusText'}"
+                    state="{path: 'view>CreateStatus', formatter: '.formatStatusState'}" />
+                  <ObjectStatus
+                    text="{path: 'view>ReleaseStatus', formatter: '.formatStatusText'}"
+                    state="{path: 'view>ReleaseStatus', formatter: '.formatStatusState'}" />
+                  <Text text="{view>MessageText}" wrapping="true" />
+                </cells>
+              </ColumnListItem>
+            </items>
+          </Table>
+        </ScrollContainer>
+      </VBox>
+    </content>
+  </Page>
+</mvc:View>

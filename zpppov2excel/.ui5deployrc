@@ -1,0 +1,15 @@
+{
+  "cwd": "./dist",
+  "files": "**/*.*",
+  "server": "https://vhrgped2ci.rise.tru-advance.com:44300",
+  "client": "500",
+  "useStrictSSL": true,
+  "language": "EN",
+  "package": "ZPP_PROCESS_ORDER_UPLOAD",
+  "bspContainer": "ZPP_PO_V2_EXCEL",
+  "bspContainerText": "Process Order Excel Upload (OData V2)",
+  "transportNo": "ED2K902956",
+  "createTransport": false,
+  "transportUseLocked": false,
+  "calculateApplicationIndex": true
+}

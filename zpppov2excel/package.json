@@ -1,0 +1,24 @@
+{
+  "name": "zpppov2excel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Excel batch creation and release of process orders over SAP Gateway OData V2",
+  "scripts": {
+    "postinstall": "node scripts/copy-xlsx.mjs",
+    "prepare:xlsx": "node scripts/copy-xlsx.mjs",
+    "start": "npm run prepare:xlsx && ui5 serve --open index.html",
+    "build": "npm run prepare:xlsx && ui5 build --all --clean-dest",
+    "deploy": "npm run build && ui5-deployer deploy --config .ui5deployrc"
+  },
+  "dependencies": {
+    "xlsx": "0.18.5"
+  },
+  "devDependencies": {
+    "@ui5/cli": "^3.11.6",
+    "ui5-middleware-simpleproxy": "^3.3.1",
+    "ui5-nwabap-deployer-cli": "^2.2.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

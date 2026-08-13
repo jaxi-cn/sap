@@ -1,0 +1,11 @@
+.sapMPage .sapMListTblCell {
+  vertical-align: middle;
+}
+
+#container .sapMInputBase {
+  min-width: 6rem;
+}
+
+#container .sapMObjStatus {
+  white-space: nowrap;
+}
