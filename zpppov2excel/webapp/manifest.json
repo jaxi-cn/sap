@@ -1,0 +1,82 @@
+{
+  "_version": "1.59.0",
+  "sap.app": {
+    "id": "zpp.processorder.v2excel.zpppov2excel",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "1.0.0"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "dataSources": {
+      "mainService": {
+        "uri": "/sap/opu/odata/sap/ZAPI_PROCESS_ORDER_2_SRV/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "2.0"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": false
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": false,
+    "dependencies": {
+      "minUI5Version": "1.120.0",
+      "libs": {
+        "sap.ui.core": {},
+        "sap.m": {},
+        "sap.ui.layout": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "zpp.processorder.v2excel.zpppov2excel.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "useBatch": false,
+          "defaultBindingMode": "TwoWay",
+          "refreshAfterChange": true,
+          "tokenHandling": true,
+          "serviceUrlParams": {
+            "sap-client": "500"
+          },
+          "metadataUrlParams": {
+            "sap-client": "500"
+          }
+        }
+      }
+    },
+    "rootView": {
+      "viewName": "zpp.processorder.v2excel.zpppov2excel.view.Main",
+      "type": "XML",
+      "async": true,
+      "id": "main"
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    }
+  }
+}

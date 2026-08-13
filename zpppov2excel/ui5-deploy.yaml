@@ -1,0 +1,13 @@
+# Reference values for deployment. The included CLI actually reads .ui5deployrc.
+# Keep this file as a human-readable handover record; never add credentials.
+target:
+  server: "https://vhrgped2ci.rise.tru-advance.com:44300"
+  client: "500"
+application:
+  bsp: "ZPP_PO_V2_EXCEL"
+  package: "ZPP_PROCESS_ORDER_UPLOAD"
+  transport: "ED2K902956"
+  description: "Process Order Excel Upload (OData V2)"
+notes:
+  - "Confirm the transport is still modifiable before deployment."
+  - "Deployment requires /UI5/ABAP_REPOSITORY_SRV and company-network access."
